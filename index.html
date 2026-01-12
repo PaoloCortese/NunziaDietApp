@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="theme-color" content="#F8FAFC">
+    <meta name="theme-color" content="#F8FAFC" id="theme-color-meta">
     <meta name="apple-mobile-web-app-title" content="NunziaDiet">
     <title>NunziaDiet</title>
     <link rel="manifest" href="manifest.json">
@@ -26,6 +26,19 @@
             --warning: #FBBF24;
         }
 
+        [data-theme="dark"] {
+            --bg: #0F172A;
+            --card: #1E293B;
+            --border: #334155;
+            --accent: #5AC8FA;
+            --accent-light: #1E3A5F;
+            --text: #F1F5F9;
+            --text-secondary: #94A3B8;
+            --success: #34D399;
+            --error: #F87171;
+            --warning: #FBBF24;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
             background: var(--bg);
@@ -33,6 +46,8 @@
             min-height: 100vh;
             padding-bottom: 100px;
             -webkit-font-smoothing: antialiased;
+            transition: background 0.3s, color 0.3s;
+            overflow-x: hidden;
         }
 
         .container { max-width: 420px; margin: 0 auto; padding: 16px; }
@@ -40,6 +55,10 @@
         .header {
             text-align: center;
             padding: 24px 0 16px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
         }
         .header h1 {
             font-size: 24px;
@@ -47,6 +66,20 @@
             color: var(--accent);
             letter-spacing: -0.5px;
         }
+        .theme-toggle {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 1px solid var(--border);
+            background: var(--card);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            transition: all 0.2s;
+        }
+        .theme-toggle:active { transform: scale(0.95); }
 
         .card {
             background: var(--card);
@@ -54,6 +87,7 @@
             padding: 16px;
             margin-bottom: 12px;
             border: 1px solid var(--border);
+            transition: background 0.3s, border-color 0.3s;
         }
 
         .card-title {
@@ -81,6 +115,7 @@
             background: var(--card);
             font-size: 15px;
             font-weight: 500;
+            color: var(--text);
             cursor: pointer;
             transition: all 0.2s;
             display: flex;
@@ -117,7 +152,7 @@
             color: var(--text-secondary);
             margin-bottom: 6px;
         }
-        .input-group input, .input-group select {
+        .input-group input, .input-group select, .input-group textarea {
             width: 100%;
             padding: 12px 14px;
             border: 1px solid var(--border);
@@ -126,8 +161,10 @@
             outline: none;
             transition: border-color 0.2s;
             background: var(--card);
+            color: var(--text);
         }
-        .input-group input:focus { border-color: var(--accent); }
+        .input-group input:focus, .input-group textarea:focus { border-color: var(--accent); }
+        .input-group textarea { resize: none; min-height: 60px; font-family: inherit; }
 
         .water-tracker {
             display: flex;
@@ -154,6 +191,12 @@
             background: var(--accent);
             border-color: var(--accent);
             color: #fff;
+            animation: dropFill 0.3s ease;
+        }
+        @keyframes dropFill {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
         }
         .water-total {
             font-size: 14px;
@@ -172,6 +215,7 @@
             border-radius: 10px;
             cursor: pointer;
             font-size: 14px;
+            transition: background 0.2s;
         }
         .activity-toggle.active { background: var(--accent-light); }
 
@@ -199,13 +243,53 @@
         }
         .toggle-switch.active::after { transform: translateX(20px); }
 
+        /* Day Navigator */
+        .day-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: var(--card);
+            border-radius: 12px;
+            margin-bottom: 12px;
+            border: 1px solid var(--border);
+        }
+        .day-nav-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 1px solid var(--border);
+            background: var(--bg);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            color: var(--text);
+            transition: all 0.2s;
+        }
+        .day-nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+        .day-nav-btn:active:not(:disabled) { transform: scale(0.95); background: var(--accent-light); }
+        .day-nav-date {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text);
+        }
+        .day-nav-today {
+            font-size: 11px;
+            color: var(--accent);
+            text-transform: uppercase;
+        }
+
         .meal-card {
             background: var(--card);
             border-radius: 12px;
             padding: 14px;
             margin-bottom: 10px;
             border: 1px solid var(--border);
+            transition: all 0.3s;
         }
+        .meal-card.saved { opacity: 0.7; }
         .meal-header {
             display: flex;
             justify-content: space-between;
@@ -235,6 +319,7 @@
             background: var(--card);
             font-size: 12px;
             font-weight: 500;
+            color: var(--text);
             cursor: pointer;
             transition: all 0.2s;
         }
@@ -243,6 +328,12 @@
             border-color: var(--accent);
             background: var(--accent-light);
             color: var(--accent);
+            animation: btnSelect 0.2s ease;
+        }
+        @keyframes btnSelect {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
         }
         .choice-btn.small { padding: 6px 10px; font-size: 11px; }
 
@@ -262,6 +353,25 @@
         .meal-btn.ok.active { background: var(--success); color: #fff; }
         .meal-btn.sgarro { color: var(--error); border-color: var(--error); }
         .meal-btn.sgarro.active { background: var(--error); color: #fff; }
+        .meal-btn.skip { color: var(--text-secondary); border-color: var(--border); }
+        .meal-btn.skip.active { background: var(--text-secondary); color: #fff; }
+
+        .meal-note {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid var(--border);
+        }
+        .meal-note input {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 12px;
+            background: var(--bg);
+            color: var(--text);
+            outline: none;
+        }
+        .meal-note input:focus { border-color: var(--accent); }
 
         .btn-primary {
             width: 100%;
@@ -288,6 +398,17 @@
             font-weight: 500;
             cursor: pointer;
             margin-top: 10px;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+        }
+        .btn-row .btn-primary,
+        .btn-row .btn-secondary {
+            flex: 1;
+            margin-top: 0;
         }
 
         .nav-tabs {
@@ -323,12 +444,32 @@
             padding: 10px 4px;
             background: var(--bg);
             border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
         }
+        .week-day:active { transform: scale(0.95); }
         .week-day-name { font-size: 10px; color: var(--text-secondary); margin-bottom: 4px; }
-        .week-day-status { font-size: 16px; }
+        .week-day-num { font-size: 12px; color: var(--text); font-weight: 500; margin-bottom: 2px; }
+        .week-day-status { font-size: 14px; }
         .week-day.today {
             background: var(--accent-light);
             border: 1px solid var(--accent);
+        }
+        .week-day.selected {
+            background: var(--accent);
+        }
+        .week-day.selected .week-day-name,
+        .week-day.selected .week-day-num { color: #fff; }
+
+        /* Weight Chart */
+        .weight-chart {
+            height: 120px;
+            margin: 16px 0;
+            position: relative;
+        }
+        .weight-chart canvas {
+            width: 100%;
+            height: 100%;
         }
 
         .progress-bar {
@@ -391,6 +532,7 @@
             gap: 4px;
             opacity: 0.4;
             border: 1px solid var(--border);
+            color: var(--text);
         }
         .badge.earned {
             background: var(--accent-light);
@@ -464,12 +606,146 @@
             height: 100%;
             object-fit: cover;
         }
+
+        /* History Modal */
+        .history-day {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border: 1px solid var(--border);
+        }
+        .history-day-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+        .history-day-date {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+        }
+        .history-day-status {
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 12px;
+        }
+        .history-day-status.ok { background: var(--success); color: #fff; }
+        .history-day-status.sgarro { background: var(--error); color: #fff; }
+        .history-meal {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 0;
+            font-size: 13px;
+        }
+        .history-meal-name { color: var(--text-secondary); }
+        .history-meal-value { color: var(--text); font-weight: 500; }
+        .history-meal-status {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: #fff;
+        }
+        .history-meal-status.ok { background: var(--success); }
+        .history-meal-status.sgarro { background: var(--error); }
+        .history-meal-status.skip { background: var(--text-secondary); }
+
+        /* Success Animation */
+        .success-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        .success-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .success-content {
+            background: var(--card);
+            border-radius: 20px;
+            padding: 32px;
+            text-align: center;
+            transform: scale(0.8);
+            transition: transform 0.3s;
+        }
+        .success-overlay.show .success-content {
+            transform: scale(1);
+        }
+        .success-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: var(--success);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            font-size: 32px;
+            color: #fff;
+            animation: successPop 0.5s ease;
+        }
+        @keyframes successPop {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        .success-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+        .success-points {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        /* Confetti */
+        .confetti {
+            position: fixed;
+            top: -10px;
+            z-index: 1001;
+            animation: confettiFall 3s linear forwards;
+        }
+        @keyframes confettiFall {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+
+        /* Swipe Container */
+        .swipe-container {
+            overflow: hidden;
+            touch-action: pan-y;
+        }
+        .swipe-content {
+            transition: transform 0.3s ease;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1>NunziaDiet</h1>
+            <button class="theme-toggle" onclick="toggleTheme()" id="theme-btn">L</button>
         </div>
 
         <!-- Screen: User Selection -->
@@ -528,11 +804,22 @@
             <div class="nav-tabs">
                 <button class="nav-tab active" onclick="showTab('daily')">Oggi</button>
                 <button class="nav-tab" onclick="showTab('weekly')">Settimana</button>
+                <button class="nav-tab" onclick="showTab('history')">Storico</button>
                 <button class="nav-tab" onclick="showTab('profile')">Profilo</button>
             </div>
 
             <!-- Tab: Daily -->
             <div id="tab-daily" class="tab-content">
+                <!-- Day Navigator -->
+                <div class="day-nav">
+                    <button class="day-nav-btn" onclick="changeDay(-1)" id="prev-day-btn">&lt;</button>
+                    <div style="text-align: center;">
+                        <div class="day-nav-date" id="current-day-label">Oggi</div>
+                        <div class="day-nav-today hidden" id="today-indicator">OGGI</div>
+                    </div>
+                    <button class="day-nav-btn" onclick="changeDay(1)" id="next-day-btn">&gt;</button>
+                </div>
+
                 <div class="card">
                     <div class="stats-row">
                         <div class="stat">
@@ -566,7 +853,10 @@
                 <div class="card-title" style="margin: 16px 0 10px;">Pasti</div>
                 <div id="meals-container"></div>
 
-                <button class="btn-primary" onclick="saveDay()" style="margin-top: 16px;">Salva giornata</button>
+                <div class="btn-row">
+                    <button class="btn-secondary" onclick="copyPreviousDay()">Copia ieri</button>
+                    <button class="btn-primary" onclick="saveDay()">Salva</button>
+                </div>
             </div>
 
             <!-- Tab: Weekly -->
@@ -591,7 +881,10 @@
                 </div>
 
                 <div class="card">
-                    <div class="card-title">Progressi peso</div>
+                    <div class="card-title">Andamento Peso</div>
+                    <div class="weight-chart">
+                        <canvas id="weight-canvas"></canvas>
+                    </div>
                     <div class="input-group">
                         <label>Peso attuale (kg)</label>
                         <input type="number" id="current-weight" step="0.1" onchange="updateWeight()">
@@ -633,6 +926,15 @@
                 </div>
             </div>
 
+            <!-- Tab: History -->
+            <div id="tab-history" class="tab-content hidden">
+                <div class="card">
+                    <div class="card-title">Storico Pasti</div>
+                    <div id="history-container"></div>
+                </div>
+                <button class="btn-secondary" onclick="exportData()">Esporta CSV</button>
+            </div>
+
             <!-- Tab: Profile -->
             <div id="tab-profile" class="tab-content hidden">
                 <div class="card">
@@ -666,6 +968,15 @@
                     <button class="btn-secondary" style="color: var(--error);" onclick="resetData()">Reset dati</button>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Success Overlay -->
+    <div class="success-overlay" id="success-overlay" onclick="hideSuccess()">
+        <div class="success-content" onclick="event.stopPropagation()">
+            <div class="success-icon">✓</div>
+            <div class="success-title" id="success-title">Ottimo lavoro!</div>
+            <div class="success-points" id="success-points">+20 punti</div>
         </div>
     </div>
 
@@ -745,8 +1056,17 @@
         "Ogni scelta sana conta."
     ];
 
+    const MEAL_NAMES = {
+        colazione: 'Colazione',
+        mezzaMattina: 'Mezza Mattinata',
+        pranzo: 'Pranzo',
+        pomeriggio: 'Pomeriggio',
+        cena: 'Cena'
+    };
+
     // State
-    let state = { currentUser: null, users: {} };
+    let state = { currentUser: null, users: {}, theme: 'light' };
+    let viewingDate = new Date();
 
     function createNewUser() {
         return {
@@ -755,6 +1075,7 @@
             goalWeight: null,
             targetWeeks: null,
             currentWeight: null,
+            weightHistory: [],
             points: 0,
             streak: 0,
             bestStreak: 0,
@@ -772,8 +1093,9 @@
             if (saved) state = JSON.parse(saved);
         } catch (e) {
             console.log('Reset state');
-            state = { currentUser: null, users: {} };
+            state = { currentUser: null, users: {}, theme: 'light' };
         }
+        applyTheme();
         updateUserAvatars();
     }
 
@@ -785,21 +1107,54 @@
         return state.users[state.currentUser];
     }
 
-    function getToday() {
-        return new Date().toISOString().split('T')[0];
+    function formatDate(date) {
+        return date.toISOString().split('T')[0];
     }
 
-    function getTodayData() {
+    function getToday() {
+        return formatDate(new Date());
+    }
+
+    function getViewingDateStr() {
+        return formatDate(viewingDate);
+    }
+
+    function isToday() {
+        return getViewingDateStr() === getToday();
+    }
+
+    function getDayData(dateStr) {
         const user = getUser();
-        const today = getToday();
-        if (!user.days[today]) {
-            user.days[today] = { water: 0, activity: false, meals: {}, done: false };
+        if (!dateStr) dateStr = getViewingDateStr();
+        if (!user.days[dateStr]) {
+            user.days[dateStr] = { water: 0, activity: false, meals: {}, done: false };
         }
-        return user.days[today];
+        return user.days[dateStr];
     }
 
     function isPaolo() {
         return state.currentUser === 'Paolo';
+    }
+
+    // Theme
+    function toggleTheme() {
+        state.theme = state.theme === 'light' ? 'dark' : 'light';
+        applyTheme();
+        saveState();
+        haptic();
+    }
+
+    function applyTheme() {
+        document.body.setAttribute('data-theme', state.theme);
+        document.getElementById('theme-btn').textContent = state.theme === 'light' ? 'L' : 'D';
+        document.getElementById('theme-color-meta').content = state.theme === 'light' ? '#F8FAFC' : '#0F172A';
+    }
+
+    // Haptic feedback
+    function haptic() {
+        if (navigator.vibrate) {
+            navigator.vibrate(10);
+        }
     }
 
     // Photo handling
@@ -813,7 +1168,6 @@
                 img.classList.remove('hidden');
                 document.getElementById('photo-placeholder').classList.add('hidden');
 
-                // Save to user if exists
                 if (state.currentUser && state.users[state.currentUser]) {
                     state.users[state.currentUser].photo = e.target.result;
                     saveState();
@@ -847,7 +1201,44 @@
         event.target.classList.add('active');
         document.getElementById('tab-' + name).classList.remove('hidden');
         if (name === 'weekly') renderWeekly();
+        if (name === 'history') renderHistory();
         if (name === 'profile') renderProfile();
+    }
+
+    // Day Navigation
+    function changeDay(delta) {
+        viewingDate.setDate(viewingDate.getDate() + delta);
+        if (viewingDate > new Date()) {
+            viewingDate = new Date();
+        }
+        haptic();
+        updateDayNav();
+        initDashboard();
+    }
+
+    function updateDayNav() {
+        const today = new Date();
+        today.setHours(0,0,0,0);
+        const viewing = new Date(viewingDate);
+        viewing.setHours(0,0,0,0);
+
+        const diffDays = Math.floor((today - viewing) / 86400000);
+        const dayLabel = document.getElementById('current-day-label');
+        const todayIndicator = document.getElementById('today-indicator');
+
+        if (diffDays === 0) {
+            dayLabel.textContent = 'Oggi';
+            todayIndicator.classList.add('hidden');
+        } else if (diffDays === 1) {
+            dayLabel.textContent = 'Ieri';
+            todayIndicator.classList.add('hidden');
+        } else {
+            const opts = { weekday: 'short', day: 'numeric', month: 'short' };
+            dayLabel.textContent = viewingDate.toLocaleDateString('it-IT', opts);
+            todayIndicator.classList.add('hidden');
+        }
+
+        document.getElementById('next-day-btn').disabled = isToday();
     }
 
     // User selection
@@ -861,8 +1252,11 @@
         } else {
             saveState();
             showScreen('dashboard');
+            viewingDate = new Date();
+            updateDayNav();
             initDashboard();
         }
+        haptic();
     }
 
     function setupPhotoPreview() {
@@ -887,8 +1281,8 @@
         user.goalWeight = parseFloat(document.getElementById('goal-weight').value);
         user.targetWeeks = parseInt(document.getElementById('target-weeks').value);
         user.currentWeight = user.startWeight;
+        user.weightHistory = [{ date: user.startDate, weight: user.startWeight }];
 
-        // Save photo if uploaded during setup
         const img = document.getElementById('photo-preview-img');
         if (img.src && !img.classList.contains('hidden')) {
             user.photo = img.src;
@@ -897,12 +1291,14 @@
         saveState();
         updateUserAvatars();
         showScreen('dashboard');
+        viewingDate = new Date();
+        updateDayNav();
         initDashboard();
     }
 
     // Dashboard
     function initDashboard() {
-        getTodayData();
+        getDayData();
         updateStats();
         renderWater();
         renderActivity();
@@ -919,14 +1315,19 @@
 
     // Water
     function renderWater() {
-        const data = getTodayData();
+        const data = getDayData();
         const el = document.getElementById('water-tracker');
         el.innerHTML = '';
         for (let i = 0; i < 4; i++) {
             const drop = document.createElement('div');
             drop.className = 'water-drop' + (i < data.water ? ' filled' : '');
             drop.textContent = '0.5';
-            drop.onclick = () => { data.water = i + 1; saveState(); renderWater(); };
+            drop.onclick = () => {
+                data.water = i + 1;
+                saveState();
+                renderWater();
+                haptic();
+            };
             el.appendChild(drop);
         }
         const total = document.createElement('span');
@@ -937,32 +1338,33 @@
 
     // Activity
     function renderActivity() {
-        const data = getTodayData();
+        const data = getDayData();
         document.getElementById('activity-toggle').classList.toggle('active', data.activity);
         document.getElementById('activity-switch').classList.toggle('active', data.activity);
     }
 
     function toggleActivity() {
-        const data = getTodayData();
+        const data = getDayData();
         data.activity = !data.activity;
         saveState();
         renderActivity();
+        haptic();
     }
 
     // Meals
     function renderMeals() {
         const container = document.getElementById('meals-container');
         container.innerHTML = '';
-        container.appendChild(createMealColazione());
-        container.appendChild(createMealMezzaMattina());
-        container.appendChild(createMealPranzo());
-        container.appendChild(createMealPomeriggio());
-        container.appendChild(createMealCena());
+        container.appendChild(createMealCard('colazione', 'Colazione'));
+        container.appendChild(createMealCard('mezzaMattina', 'Mezza Mattinata'));
+        container.appendChild(createMealCard('pranzo', 'Pranzo'));
+        container.appendChild(createMealCard('pomeriggio', 'Pomeriggio'));
+        container.appendChild(createMealCard('cena', 'Cena'));
     }
 
     function getMealData(mealKey) {
-        const data = getTodayData();
-        if (!data.meals[mealKey]) data.meals[mealKey] = { sel: {}, status: null };
+        const data = getDayData();
+        if (!data.meals[mealKey]) data.meals[mealKey] = { sel: {}, status: null, note: '' };
         return data.meals[mealKey];
     }
 
@@ -974,12 +1376,19 @@
         user.prefs[mealKey][key] = value;
         saveState();
         renderMeals();
+        haptic();
     }
 
     function setMealStatus(mealKey, status) {
         getMealData(mealKey).status = status;
         saveState();
         renderMeals();
+        haptic();
+    }
+
+    function setMealNote(mealKey, note) {
+        getMealData(mealKey).note = note;
+        saveState();
     }
 
     function getPref(mealKey, key) {
@@ -996,148 +1405,146 @@
     function statusBtns(mealKey, status) {
         return `<div class="meal-actions">
             <button class="meal-btn ok${status === 'ok' ? ' active' : ''}" onclick="setMealStatus('${mealKey}','ok')">OK</button>
+            <button class="meal-btn skip${status === 'skip' ? ' active' : ''}" onclick="setMealStatus('${mealKey}','skip')">Salta</button>
             <button class="meal-btn sgarro${status === 'sgarro' ? ' active' : ''}" onclick="setMealStatus('${mealKey}','sgarro')">Sgarro</button>
         </div>`;
     }
 
-    function createMealColazione() {
-        const m = getMealData('colazione');
-        const card = document.createElement('div');
-        card.className = 'meal-card';
-        card.innerHTML = `
-            <div class="meal-header"><span class="meal-time">Colazione</span></div>
-            <div class="choice-group">
-                <div class="choice-label">Bevanda</div>
-                ${btnGroup('colazione', 'bevanda', FOODS.colazione.bevanda, m.sel.bevanda || getPref('colazione', 'bevanda'))}
-            </div>
-            <div class="choice-group">
-                <div class="choice-label">Accompagnamento</div>
-                ${btnGroup('colazione', 'accompagnamento', FOODS.colazione.accompagnamento, m.sel.accompagnamento || getPref('colazione', 'accompagnamento'))}
-            </div>
-            ${statusBtns('colazione', m.status)}
-        `;
-        return card;
+    function noteField(mealKey, note) {
+        return `<div class="meal-note">
+            <input type="text" placeholder="Note..." value="${note || ''}" onchange="setMealNote('${mealKey}', this.value)">
+        </div>`;
     }
 
-    function createMealMezzaMattina() {
-        const m = getMealData('mezzaMattina');
-        const card = document.createElement('div');
-        card.className = 'meal-card';
-        card.innerHTML = `
-            <div class="meal-header"><span class="meal-time">Mezza Mattinata</span></div>
-            <div class="choice-group">
-                <div class="choice-label">Proteina</div>
-                ${btnGroup('mezzaMattina', 'proteina', FOODS.mezzaMattina.proteina, m.sel.proteina || getPref('mezzaMattina', 'proteina'))}
-            </div>
-            ${statusBtns('mezzaMattina', m.status)}
-        `;
-        return card;
-    }
-
-    function createMealPomeriggio() {
-        const m = getMealData('pomeriggio');
-        const card = document.createElement('div');
-        card.className = 'meal-card';
-        card.innerHTML = `
-            <div class="meal-header"><span class="meal-time">Pomeriggio</span></div>
-            <div class="choice-group">
-                <div class="choice-label">Bevanda</div>
-                ${btnGroup('pomeriggio', 'bevanda', FOODS.pomeriggio.bevanda, m.sel.bevanda || getPref('pomeriggio', 'bevanda'))}
-            </div>
-            <div class="choice-group">
-                <div class="choice-label">Accompagnamento</div>
-                ${btnGroup('pomeriggio', 'accompagnamento', FOODS.pomeriggio.accompagnamento, m.sel.accompagnamento || getPref('pomeriggio', 'accompagnamento'))}
-            </div>
-            ${statusBtns('pomeriggio', m.status)}
-        `;
-        return card;
-    }
-
-    function createMealPranzo() {
-        const m = getMealData('pranzo');
+    function createMealCard(mealKey, mealName) {
+        const m = getMealData(mealKey);
         const p = isPaolo();
         const card = document.createElement('div');
-        card.className = 'meal-card';
+        card.className = 'meal-card' + (m.status ? ' saved' : '');
 
-        let protDetail = '';
-        if (m.sel.proteina) {
-            const prot = FOODS.pranzo.proteina.find(x => x.id === m.sel.proteina);
-            if (prot && prot.items.length > 0) {
-                protDetail = `<div class="detail-section">
-                    <div class="choice-label">${prot.name} - scegli tipo</div>
-                    <div class="choice-buttons">${prot.items.map(i =>
-                        `<button class="choice-btn small${m.sel.protItem === i ? ' selected' : ''}" onclick="setMealSel('pranzo','protItem','${i}')">${i}</button>`
-                    ).join('')}</div>
-                    <div class="qty-note">Quantita: ${p ? prot.qtyP : prot.qtyF}</div>
-                </div>`;
+        let content = `<div class="meal-header"><span class="meal-time">${mealName}</span></div>`;
+
+        if (mealKey === 'colazione' || mealKey === 'pomeriggio') {
+            const foods = FOODS[mealKey];
+            content += `
+                <div class="choice-group">
+                    <div class="choice-label">Bevanda</div>
+                    ${btnGroup(mealKey, 'bevanda', foods.bevanda, m.sel.bevanda || getPref(mealKey, 'bevanda'))}
+                </div>
+                <div class="choice-group">
+                    <div class="choice-label">Accompagnamento</div>
+                    ${btnGroup(mealKey, 'accompagnamento', foods.accompagnamento, m.sel.accompagnamento || getPref(mealKey, 'accompagnamento'))}
+                </div>
+            `;
+        } else if (mealKey === 'mezzaMattina') {
+            content += `
+                <div class="choice-group">
+                    <div class="choice-label">Proteina</div>
+                    ${btnGroup(mealKey, 'proteina', FOODS.mezzaMattina.proteina, m.sel.proteina || getPref(mealKey, 'proteina'))}
+                </div>
+            `;
+        } else if (mealKey === 'pranzo') {
+            let protDetail = '';
+            if (m.sel.proteina) {
+                const prot = FOODS.pranzo.proteina.find(x => x.id === m.sel.proteina);
+                if (prot && prot.items.length > 0) {
+                    protDetail = `<div class="detail-section">
+                        <div class="choice-label">${prot.name} - scegli tipo</div>
+                        <div class="choice-buttons">${prot.items.map(i =>
+                            `<button class="choice-btn small${m.sel.protItem === i ? ' selected' : ''}" onclick="setMealSel('pranzo','protItem','${i}')">${i}</button>`
+                        ).join('')}</div>
+                        <div class="qty-note">Quantita: ${p ? prot.qtyP : prot.qtyF}</div>
+                    </div>`;
+                }
             }
+            content += `
+                <div class="choice-group">
+                    <div class="choice-label">Verdura</div>
+                    ${btnGroup('pranzo', 'verdura', FOODS.pranzo.verdura, m.sel.verdura || getPref('pranzo', 'verdura'))}
+                </div>
+                <div class="choice-group">
+                    <div class="choice-label">Proteina</div>
+                    <div class="choice-buttons">${FOODS.pranzo.proteina.map(pr =>
+                        `<button class="choice-btn${m.sel.proteina === pr.id ? ' selected' : ''}" onclick="setMealSel('pranzo','proteina','${pr.id}');setMealSel('pranzo','protItem',null)">${pr.name}<br><small>${p ? pr.qtyP : pr.qtyF}</small></button>`
+                    ).join('')}</div>
+                </div>
+                ${protDetail}
+            `;
+        } else if (mealKey === 'cena') {
+            let protDetail = '';
+            if (m.sel.proteina) {
+                const prot = FOODS.cena.proteina.find(x => x.id === m.sel.proteina);
+                if (prot && prot.items.length > 0) {
+                    protDetail = `<div class="detail-section">
+                        <div class="choice-label">${prot.name} - scegli tipo</div>
+                        <div class="choice-buttons">${prot.items.map(i =>
+                            `<button class="choice-btn small${m.sel.protItem === i ? ' selected' : ''}" onclick="setMealSel('cena','protItem','${i}')">${i}</button>`
+                        ).join('')}</div>
+                        <div class="qty-note">Quantita: ${p ? prot.qtyP : prot.qtyF}</div>
+                    </div>`;
+                }
+            }
+            content += `
+                <div class="choice-group">
+                    <div class="choice-label">Carboidrato</div>
+                    <div class="choice-buttons">${FOODS.cena.carbo.map(c =>
+                        `<button class="choice-btn${m.sel.carbo === c.id ? ' selected' : ''}" onclick="setMealSel('cena','carbo','${c.id}')">${c.name}<br><small>${p ? c.qtyP : c.qtyF}</small></button>`
+                    ).join('')}</div>
+                </div>
+                <div class="choice-group">
+                    <div class="choice-label">Verdura</div>
+                    ${btnGroup('cena', 'verdura', FOODS.cena.verdura, m.sel.verdura || getPref('cena', 'verdura'))}
+                </div>
+                <div class="choice-group">
+                    <div class="choice-label">Proteina</div>
+                    <div class="choice-buttons">${FOODS.cena.proteina.map(pr =>
+                        `<button class="choice-btn${m.sel.proteina === pr.id ? ' selected' : ''}" onclick="setMealSel('cena','proteina','${pr.id}');setMealSel('cena','protItem',null)">${pr.name}<br><small>${p ? pr.qtyP : pr.qtyF}</small></button>`
+                    ).join('')}</div>
+                </div>
+                ${protDetail}
+            `;
         }
 
-        card.innerHTML = `
-            <div class="meal-header"><span class="meal-time">Pranzo</span></div>
-            <div class="choice-group">
-                <div class="choice-label">Verdura</div>
-                ${btnGroup('pranzo', 'verdura', FOODS.pranzo.verdura, m.sel.verdura || getPref('pranzo', 'verdura'))}
-            </div>
-            <div class="choice-group">
-                <div class="choice-label">Proteina</div>
-                <div class="choice-buttons">${FOODS.pranzo.proteina.map(pr =>
-                    `<button class="choice-btn${m.sel.proteina === pr.id ? ' selected' : ''}" onclick="setMealSel('pranzo','proteina','${pr.id}');setMealSel('pranzo','protItem',null)">${pr.name}<br><small>${p ? pr.qtyP : pr.qtyF}</small></button>`
-                ).join('')}</div>
-            </div>
-            ${protDetail}
-            ${statusBtns('pranzo', m.status)}
-        `;
+        content += statusBtns(mealKey, m.status);
+        content += noteField(mealKey, m.note);
+
+        card.innerHTML = content;
         return card;
     }
 
-    function createMealCena() {
-        const m = getMealData('cena');
-        const p = isPaolo();
-        const card = document.createElement('div');
-        card.className = 'meal-card';
+    // Copy previous day
+    function copyPreviousDay() {
+        const yesterday = new Date(viewingDate);
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayStr = formatDate(yesterday);
+        const user = getUser();
 
-        let protDetail = '';
-        if (m.sel.proteina) {
-            const prot = FOODS.cena.proteina.find(x => x.id === m.sel.proteina);
-            if (prot && prot.items.length > 0) {
-                protDetail = `<div class="detail-section">
-                    <div class="choice-label">${prot.name} - scegli tipo</div>
-                    <div class="choice-buttons">${prot.items.map(i =>
-                        `<button class="choice-btn small${m.sel.protItem === i ? ' selected' : ''}" onclick="setMealSel('cena','protItem','${i}')">${i}</button>`
-                    ).join('')}</div>
-                    <div class="qty-note">Quantita: ${p ? prot.qtyP : prot.qtyF}</div>
-                </div>`;
-            }
+        if (!user.days[yesterdayStr]) {
+            alert('Nessun dato per ieri!');
+            return;
         }
 
-        card.innerHTML = `
-            <div class="meal-header"><span class="meal-time">Cena</span></div>
-            <div class="choice-group">
-                <div class="choice-label">Carboidrato</div>
-                <div class="choice-buttons">${FOODS.cena.carbo.map(c =>
-                    `<button class="choice-btn${m.sel.carbo === c.id ? ' selected' : ''}" onclick="setMealSel('cena','carbo','${c.id}')">${c.name}<br><small>${p ? c.qtyP : c.qtyF}</small></button>`
-                ).join('')}</div>
-            </div>
-            <div class="choice-group">
-                <div class="choice-label">Verdura</div>
-                ${btnGroup('cena', 'verdura', FOODS.cena.verdura, m.sel.verdura || getPref('cena', 'verdura'))}
-            </div>
-            <div class="choice-group">
-                <div class="choice-label">Proteina</div>
-                <div class="choice-buttons">${FOODS.cena.proteina.map(pr =>
-                    `<button class="choice-btn${m.sel.proteina === pr.id ? ' selected' : ''}" onclick="setMealSel('cena','proteina','${pr.id}');setMealSel('cena','protItem',null)">${pr.name}<br><small>${p ? pr.qtyP : pr.qtyF}</small></button>`
-                ).join('')}</div>
-            </div>
-            ${protDetail}
-            ${statusBtns('cena', m.status)}
-        `;
-        return card;
+        const yesterdayData = user.days[yesterdayStr];
+        const todayData = getDayData();
+
+        todayData.water = yesterdayData.water;
+        todayData.activity = yesterdayData.activity;
+        todayData.meals = JSON.parse(JSON.stringify(yesterdayData.meals));
+        // Reset status
+        Object.keys(todayData.meals).forEach(k => {
+            todayData.meals[k].status = null;
+            todayData.meals[k].note = '';
+        });
+        todayData.done = false;
+
+        saveState();
+        initDashboard();
+        haptic();
     }
 
     // Save day
     function saveDay() {
-        const data = getTodayData();
+        const data = getDayData();
         const meals = ['colazione', 'mezzaMattina', 'pranzo', 'pomeriggio', 'cena'];
         const allSet = meals.every(k => data.meals[k] && data.meals[k].status);
 
@@ -1150,13 +1557,15 @@
         const hasSgarro = meals.some(k => data.meals[k].status === 'sgarro');
         data.done = true;
 
+        let bonus = 0;
         if (hasSgarro) {
             user.streak = 0;
         } else {
             user.streak++;
-            user.points += 10;
-            if (data.water >= 4) user.points += 5;
-            if (data.activity) user.points += 5;
+            bonus += 10;
+            if (data.water >= 4) bonus += 5;
+            if (data.activity) bonus += 5;
+            user.points += bonus;
         }
 
         user.totalDays++;
@@ -1164,9 +1573,45 @@
 
         saveState();
         updateStats();
+        haptic();
 
-        const bonus = (!hasSgarro ? (10 + (data.water >= 4 ? 5 : 0) + (data.activity ? 5 : 0)) : 0);
-        alert(hasSgarro ? 'Giornata salvata. Domani si riparte!' : 'Ottimo lavoro! +' + bonus + ' punti!');
+        // Show success animation
+        if (!hasSgarro) {
+            showSuccess('Ottimo lavoro!', '+' + bonus + ' punti');
+            createConfetti();
+        } else {
+            showSuccess('Giornata salvata', 'Domani si riparte!');
+        }
+    }
+
+    // Success animation
+    function showSuccess(title, points) {
+        document.getElementById('success-title').textContent = title;
+        document.getElementById('success-points').textContent = points;
+        document.getElementById('success-overlay').classList.add('show');
+        setTimeout(hideSuccess, 2000);
+    }
+
+    function hideSuccess() {
+        document.getElementById('success-overlay').classList.remove('show');
+    }
+
+    // Confetti
+    function createConfetti() {
+        const colors = ['#5AC8FA', '#34D399', '#FBBF24', '#F87171', '#A78BFA'];
+        for (let i = 0; i < 50; i++) {
+            const confetti = document.createElement('div');
+            confetti.className = 'confetti';
+            confetti.style.left = Math.random() * 100 + 'vw';
+            confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            confetti.style.width = (Math.random() * 10 + 5) + 'px';
+            confetti.style.height = confetti.style.width;
+            confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+            confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+            confetti.style.animationDelay = Math.random() * 0.5 + 's';
+            document.body.appendChild(confetti);
+            setTimeout(() => confetti.remove(), 4000);
+        }
     }
 
     // Weekly
@@ -1181,7 +1626,7 @@
         for (let i = 6; i >= 0; i--) {
             const d = new Date(today);
             d.setDate(d.getDate() - i);
-            const dateStr = d.toISOString().split('T')[0];
+            const dateStr = formatDate(d);
             const dayData = user.days[dateStr];
 
             let status = '-';
@@ -1193,7 +1638,13 @@
 
             const el = document.createElement('div');
             el.className = 'week-day' + (i === 0 ? ' today' : '');
-            el.innerHTML = `<div class="week-day-name">${dayNames[d.getDay()]}</div><div class="week-day-status">${status}</div>`;
+            el.innerHTML = `<div class="week-day-name">${dayNames[d.getDay()]}</div><div class="week-day-num">${d.getDate()}</div><div class="week-day-status">${status}</div>`;
+            el.onclick = () => {
+                viewingDate = new Date(d);
+                updateDayNav();
+                initDashboard();
+                showTabByName('daily');
+            };
             grid.appendChild(el);
         }
 
@@ -1206,15 +1657,36 @@
         document.getElementById('goal-w-label').textContent = 'Obiettivo: ' + (user.goalWeight || '--') + ' kg';
         document.getElementById('current-weight').value = user.currentWeight || '';
         updateWeightProgress();
+        renderWeightChart();
 
         document.getElementById('motivation-text').textContent = '"' + MOTIVATIONS[Math.floor(Math.random() * MOTIVATIONS.length)] + '"';
     }
 
+    function showTabByName(name) {
+        document.querySelectorAll('.nav-tab').forEach((t, i) => {
+            t.classList.toggle('active', t.textContent.toLowerCase().includes(name.substring(0, 4)));
+        });
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+        document.getElementById('tab-' + name).classList.remove('hidden');
+    }
+
     function updateWeight() {
         const user = getUser();
-        user.currentWeight = parseFloat(document.getElementById('current-weight').value);
+        const newWeight = parseFloat(document.getElementById('current-weight').value);
+        user.currentWeight = newWeight;
+
+        // Add to history
+        const today = getToday();
+        const existing = user.weightHistory.findIndex(w => w.date === today);
+        if (existing >= 0) {
+            user.weightHistory[existing].weight = newWeight;
+        } else {
+            user.weightHistory.push({ date: today, weight: newWeight });
+        }
+
         saveState();
         updateWeightProgress();
+        renderWeightChart();
     }
 
     function updateWeightProgress() {
@@ -1227,6 +1699,100 @@
         document.getElementById('weight-diff').textContent = lost.toFixed(1) + ' kg persi su ' + tolose.toFixed(1) + ' kg obiettivo';
     }
 
+    // Weight Chart
+    function renderWeightChart() {
+        const canvas = document.getElementById('weight-canvas');
+        const ctx = canvas.getContext('2d');
+        const user = getUser();
+
+        // Set canvas size
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width * 2;
+        canvas.height = rect.height * 2;
+        ctx.scale(2, 2);
+
+        const width = rect.width;
+        const height = rect.height;
+
+        // Clear
+        ctx.clearRect(0, 0, width, height);
+
+        if (!user.weightHistory || user.weightHistory.length < 2) {
+            ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--text-secondary');
+            ctx.font = '12px -apple-system';
+            ctx.textAlign = 'center';
+            ctx.fillText('Aggiungi piu pesate per vedere il grafico', width / 2, height / 2);
+            return;
+        }
+
+        const data = user.weightHistory.slice(-14); // Last 14 entries
+        const weights = data.map(d => d.weight);
+        const minW = Math.min(...weights) - 1;
+        const maxW = Math.max(...weights) + 1;
+
+        const padding = { left: 35, right: 10, top: 10, bottom: 20 };
+        const chartW = width - padding.left - padding.right;
+        const chartH = height - padding.top - padding.bottom;
+
+        // Draw grid lines
+        ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue('--border');
+        ctx.lineWidth = 0.5;
+        for (let i = 0; i <= 4; i++) {
+            const y = padding.top + (chartH / 4) * i;
+            ctx.beginPath();
+            ctx.moveTo(padding.left, y);
+            ctx.lineTo(width - padding.right, y);
+            ctx.stroke();
+
+            // Labels
+            const weight = maxW - ((maxW - minW) / 4) * i;
+            ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--text-secondary');
+            ctx.font = '10px -apple-system';
+            ctx.textAlign = 'right';
+            ctx.fillText(weight.toFixed(1), padding.left - 5, y + 3);
+        }
+
+        // Draw line
+        ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue('--accent');
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+
+        data.forEach((d, i) => {
+            const x = padding.left + (chartW / (data.length - 1)) * i;
+            const y = padding.top + chartH - ((d.weight - minW) / (maxW - minW)) * chartH;
+
+            if (i === 0) {
+                ctx.moveTo(x, y);
+            } else {
+                ctx.lineTo(x, y);
+            }
+        });
+        ctx.stroke();
+
+        // Draw points
+        ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--accent');
+        data.forEach((d, i) => {
+            const x = padding.left + (chartW / (data.length - 1)) * i;
+            const y = padding.top + chartH - ((d.weight - minW) / (maxW - minW)) * chartH;
+
+            ctx.beginPath();
+            ctx.arc(x, y, 4, 0, Math.PI * 2);
+            ctx.fill();
+        });
+
+        // Goal line
+        if (user.goalWeight >= minW && user.goalWeight <= maxW) {
+            const goalY = padding.top + chartH - ((user.goalWeight - minW) / (maxW - minW)) * chartH;
+            ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue('--success');
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(padding.left, goalY);
+            ctx.lineTo(width - padding.right, goalY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+    }
+
     function saveDietologVisit() {
         const user = getUser();
         user.visits.push({
@@ -1236,6 +1802,90 @@
         });
         saveState();
         alert('Visita salvata!');
+        haptic();
+    }
+
+    // History
+    function renderHistory() {
+        const user = getUser();
+        const container = document.getElementById('history-container');
+        container.innerHTML = '';
+
+        const days = Object.keys(user.days).filter(d => user.days[d].done).sort().reverse().slice(0, 14);
+
+        if (days.length === 0) {
+            container.innerHTML = '<p style="text-align:center;color:var(--text-secondary);padding:20px;">Nessun giorno salvato</p>';
+            return;
+        }
+
+        days.forEach(dateStr => {
+            const dayData = user.days[dateStr];
+            const hasSgarro = Object.values(dayData.meals).some(m => m.status === 'sgarro');
+
+            const date = new Date(dateStr);
+            const dateLabel = date.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'short' });
+
+            let mealsHtml = '';
+            ['colazione', 'mezzaMattina', 'pranzo', 'pomeriggio', 'cena'].forEach(mealKey => {
+                const meal = dayData.meals[mealKey];
+                if (meal) {
+                    const selections = Object.entries(meal.sel || {})
+                        .filter(([k, v]) => v)
+                        .map(([k, v]) => v)
+                        .join(', ');
+
+                    mealsHtml += `
+                        <div class="history-meal">
+                            <span class="history-meal-name">${MEAL_NAMES[mealKey]}</span>
+                            <span class="history-meal-value">${selections || '-'}</span>
+                            <span class="history-meal-status ${meal.status}">${meal.status === 'ok' ? 'v' : meal.status === 'sgarro' ? 'x' : '-'}</span>
+                        </div>
+                    `;
+                }
+            });
+
+            const el = document.createElement('div');
+            el.className = 'history-day';
+            el.innerHTML = `
+                <div class="history-day-header">
+                    <span class="history-day-date">${dateLabel}</span>
+                    <span class="history-day-status ${hasSgarro ? 'sgarro' : 'ok'}">${hasSgarro ? 'Sgarro' : 'OK'}</span>
+                </div>
+                <div>Acqua: ${dayData.water * 0.5}L | Attivita: ${dayData.activity ? 'Si' : 'No'}</div>
+                ${mealsHtml}
+            `;
+            container.appendChild(el);
+        });
+    }
+
+    // Export data
+    function exportData() {
+        const user = getUser();
+        let csv = 'Data,Acqua(L),Attivita,Colazione,MezzaMattina,Pranzo,Pomeriggio,Cena,Esito\n';
+
+        Object.keys(user.days).sort().forEach(dateStr => {
+            const day = user.days[dateStr];
+            if (!day.done) return;
+
+            const hasSgarro = Object.values(day.meals).some(m => m.status === 'sgarro');
+            const mealSummary = (mealKey) => {
+                const m = day.meals[mealKey];
+                if (!m) return '-';
+                const sels = Object.values(m.sel || {}).filter(v => v).join('+');
+                return `${sels || '-'}(${m.status})`;
+            };
+
+            csv += `${dateStr},${day.water * 0.5},${day.activity ? '1' : '0'},${mealSummary('colazione')},${mealSummary('mezzaMattina')},${mealSummary('pranzo')},${mealSummary('pomeriggio')},${mealSummary('cena')},${hasSgarro ? 'Sgarro' : 'OK'}\n`;
+        });
+
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `NunziaDiet_${state.currentUser}_${getToday()}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+        haptic();
     }
 
     // Profile
@@ -1289,7 +1939,8 @@
     function resetData() {
         if (confirm('Sei sicuro di voler cancellare tutti i dati?')) {
             localStorage.removeItem('nunziaDietApp');
-            state = { currentUser: null, users: {} };
+            state = { currentUser: null, users: {}, theme: 'light' };
+            applyTheme();
             showScreen('select');
         }
     }
@@ -1298,6 +1949,8 @@
     loadState();
     if (state.currentUser && state.users[state.currentUser] && state.users[state.currentUser].startDate) {
         showScreen('dashboard');
+        viewingDate = new Date();
+        updateDayNav();
         initDashboard();
     } else if (state.currentUser) {
         showScreen('setup');
