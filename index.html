@@ -906,6 +906,10 @@
                         <input type="date" id="visit-date">
                     </div>
                     <div class="input-group">
+                        <label>Peso rilevato (kg)</label>
+                        <input type="number" id="visit-weight" step="0.1" placeholder="Es: 82.5">
+                    </div>
+                    <div class="input-group">
                         <label>Esito</label>
                         <select id="visit-outcome">
                             <option value="">Seleziona...</option>
@@ -1828,15 +1832,38 @@
         });
         ctx.stroke();
 
-        // Draw points
-        ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--accent');
+        // Draw points (normal ones first)
         data.forEach((d, i) => {
             const x = padding.left + (chartW / (data.length - 1)) * i;
             const y = padding.top + chartH - ((d.weight - minW) / (maxW - minW)) * chartH;
 
-            ctx.beginPath();
-            ctx.arc(x, y, 4, 0, Math.PI * 2);
-            ctx.fill();
+            if (!d.isVisit) {
+                ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--accent');
+                ctx.beginPath();
+                ctx.arc(x, y, 4, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        });
+
+        // Draw visit points (larger, different color)
+        data.forEach((d, i) => {
+            const x = padding.left + (chartW / (data.length - 1)) * i;
+            const y = padding.top + chartH - ((d.weight - minW) / (maxW - minW)) * chartH;
+
+            if (d.isVisit) {
+                // Outer ring
+                ctx.strokeStyle = '#FF6B6B';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(x, y, 7, 0, Math.PI * 2);
+                ctx.stroke();
+
+                // Inner fill
+                ctx.fillStyle = '#FF6B6B';
+                ctx.beginPath();
+                ctx.arc(x, y, 4, 0, Math.PI * 2);
+                ctx.fill();
+            }
         });
 
         // Goal line
@@ -1854,12 +1881,38 @@
 
     function saveDietologVisit() {
         const user = getUser();
+        const visitWeight = parseFloat(document.getElementById('visit-weight').value);
+        const visitDate = document.getElementById('visit-date').value;
+
         user.visits.push({
-            date: document.getElementById('visit-date').value,
+            date: visitDate,
+            weight: visitWeight || null,
             outcome: document.getElementById('visit-outcome').value,
             notes: document.getElementById('visit-notes').value
         });
+
+        // Update current weight if provided
+        if (visitWeight) {
+            user.currentWeight = visitWeight;
+            // Add to weight history with visit flag
+            const existing = user.weightHistory.findIndex(w => w.date === visitDate);
+            if (existing >= 0) {
+                user.weightHistory[existing] = { date: visitDate, weight: visitWeight, isVisit: true };
+            } else {
+                user.weightHistory.push({ date: visitDate, weight: visitWeight, isVisit: true });
+            }
+            document.getElementById('current-weight').value = visitWeight;
+        }
+
+        // Clear form
+        document.getElementById('visit-date').value = '';
+        document.getElementById('visit-weight').value = '';
+        document.getElementById('visit-outcome').value = '';
+        document.getElementById('visit-notes').value = '';
+
         saveState();
+        renderWeightChart();
+        updateWeightProgress();
         alert('Visita salvata!');
         haptic();
     }
@@ -1870,50 +1923,104 @@
         const container = document.getElementById('history-container');
         container.innerHTML = '';
 
-        const days = Object.keys(user.days).filter(d => user.days[d].done).sort().reverse().slice(0, 14);
+        // Combine days and visits into a single timeline
+        const events = [];
 
-        if (days.length === 0) {
-            container.innerHTML = '<p style="text-align:center;color:var(--text-secondary);padding:20px;">Nessun giorno salvato</p>';
+        // Add days
+        Object.keys(user.days).filter(d => user.days[d].done).forEach(dateStr => {
+            events.push({ type: 'day', date: dateStr, data: user.days[dateStr] });
+        });
+
+        // Add visits
+        (user.visits || []).forEach(visit => {
+            if (visit.date) {
+                events.push({ type: 'visit', date: visit.date, data: visit });
+            }
+        });
+
+        // Sort by date descending and take last 20
+        events.sort((a, b) => b.date.localeCompare(a.date));
+        const recentEvents = events.slice(0, 20);
+
+        if (recentEvents.length === 0) {
+            container.innerHTML = '<p style="text-align:center;color:var(--text-secondary);padding:20px;">Nessun dato salvato</p>';
             return;
         }
 
-        days.forEach(dateStr => {
-            const dayData = user.days[dateStr];
-            const hasSgarro = Object.values(dayData.meals).some(m => m.status === 'sgarro');
-
-            const date = new Date(dateStr);
+        recentEvents.forEach(event => {
+            const date = new Date(event.date);
             const dateLabel = date.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'short' });
 
-            let mealsHtml = '';
-            ['colazione', 'mezzaMattina', 'pranzo', 'pomeriggio', 'cena'].forEach(mealKey => {
-                const meal = dayData.meals[mealKey];
-                if (meal) {
-                    const selections = Object.entries(meal.sel || {})
-                        .filter(([k, v]) => v)
-                        .map(([k, v]) => v)
-                        .join(', ');
+            if (event.type === 'day') {
+                const dayData = event.data;
+                const sgarroMeals = [];
+                let dayNotes = [];
 
-                    mealsHtml += `
-                        <div class="history-meal">
-                            <span class="history-meal-name">${MEAL_NAMES[mealKey]}</span>
-                            <span class="history-meal-value">${selections || '-'}</span>
-                            <span class="history-meal-status ${meal.status}">${meal.status === 'ok' ? 'v' : meal.status === 'sgarro' ? 'x' : '-'}</span>
-                        </div>
-                    `;
+                // Collect sgarro meals and notes
+                ['colazione', 'mezzaMattina', 'pranzo', 'pomeriggio', 'cena'].forEach(mealKey => {
+                    const meal = dayData.meals[mealKey];
+                    if (meal) {
+                        if (meal.status === 'sgarro') {
+                            sgarroMeals.push(MEAL_NAMES[mealKey]);
+                        }
+                        if (meal.note && meal.note.trim()) {
+                            dayNotes.push(`${MEAL_NAMES[mealKey]}: ${meal.note}`);
+                        }
+                    }
+                });
+
+                const hasSgarro = sgarroMeals.length > 0;
+
+                let contentHtml = `<div style="font-size:12px;color:var(--text-secondary);">Acqua: ${dayData.water * 0.5}L | Attivita: ${dayData.activity ? 'Si' : 'No'}</div>`;
+
+                if (hasSgarro) {
+                    contentHtml += `<div style="margin-top:6px;font-size:13px;color:var(--error);">X ${sgarroMeals.join(', ')}</div>`;
                 }
-            });
 
-            const el = document.createElement('div');
-            el.className = 'history-day';
-            el.innerHTML = `
-                <div class="history-day-header">
-                    <span class="history-day-date">${dateLabel}</span>
-                    <span class="history-day-status ${hasSgarro ? 'sgarro' : 'ok'}">${hasSgarro ? 'Sgarro' : 'OK'}</span>
-                </div>
-                <div>Acqua: ${dayData.water * 0.5}L | Attivita: ${dayData.activity ? 'Si' : 'No'}</div>
-                ${mealsHtml}
-            `;
-            container.appendChild(el);
+                if (dayNotes.length > 0) {
+                    contentHtml += `<div style="margin-top:6px;padding:8px;background:var(--bg);border-radius:6px;font-size:12px;color:var(--text);">${dayNotes.join('<br>')}</div>`;
+                }
+
+                const el = document.createElement('div');
+                el.className = 'history-day';
+                el.innerHTML = `
+                    <div class="history-day-header">
+                        <span class="history-day-date">${dateLabel}</span>
+                        <span class="history-day-status ${hasSgarro ? 'sgarro' : 'ok'}">${hasSgarro ? 'Sgarro' : 'OK'}</span>
+                    </div>
+                    ${contentHtml}
+                `;
+                container.appendChild(el);
+
+            } else if (event.type === 'visit') {
+                const visit = event.data;
+                const outcomeLabels = { positive: 'Positivo', neutral: 'Neutro', negative: 'Negativo' };
+                const outcomeColors = { positive: 'var(--success)', neutral: 'var(--warning)', negative: 'var(--error)' };
+
+                let visitHtml = '';
+                if (visit.weight) {
+                    visitHtml += `<div style="font-size:14px;font-weight:600;color:var(--accent);">Peso: ${visit.weight} kg</div>`;
+                }
+                if (visit.outcome) {
+                    visitHtml += `<div style="font-size:12px;margin-top:4px;color:${outcomeColors[visit.outcome] || 'var(--text)'};">Esito: ${outcomeLabels[visit.outcome] || visit.outcome}</div>`;
+                }
+                if (visit.notes) {
+                    visitHtml += `<div style="margin-top:6px;padding:8px;background:var(--bg);border-radius:6px;font-size:12px;color:var(--text);">${visit.notes}</div>`;
+                }
+
+                const el = document.createElement('div');
+                el.className = 'history-day';
+                el.style.borderColor = 'var(--accent)';
+                el.style.borderWidth = '2px';
+                el.innerHTML = `
+                    <div class="history-day-header">
+                        <span class="history-day-date">${dateLabel}</span>
+                        <span style="font-size:11px;padding:4px 8px;background:var(--accent);color:#fff;border-radius:12px;">VISITA</span>
+                    </div>
+                    ${visitHtml}
+                `;
+                container.appendChild(el);
+            }
         });
     }
 
