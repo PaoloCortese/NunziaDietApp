@@ -1402,12 +1402,22 @@
         // Create default users if they don't exist
         if (!state.users['Paolo']) {
             state.users['Paolo'] = createNewUser();
-            state.users['Paolo'].isAdmin = true;
         }
+        // Paolo is always admin
+        state.users['Paolo'].isAdmin = true;
+
         if (!state.users['Flora']) {
             state.users['Flora'] = createNewUser();
         }
         saveState();
+    }
+
+    function ensureAdminExists() {
+        // Make sure at least Paolo exists and is admin
+        if (state.users['Paolo']) {
+            state.users['Paolo'].isAdmin = true;
+            saveState();
+        }
     }
 
     function renderUserSelection() {
@@ -2741,6 +2751,7 @@
 
     // Init
     loadState();
+    ensureAdminExists(); // Make sure Paolo is admin
     renderUserSelection();
     updateHeaderUser();
     if (state.currentUser && state.users[state.currentUser] && state.users[state.currentUser].startDate) {
