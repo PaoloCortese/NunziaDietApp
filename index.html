@@ -881,9 +881,6 @@
                     <!-- Users rendered dynamically -->
                 </div>
             </div>
-            <div class="card" style="margin-top: 12px;">
-                <button class="btn-secondary" onclick="addNewUser()">+ Aggiungi utente</button>
-            </div>
         </div>
 
         <!-- Screen: Setup -->
@@ -1098,23 +1095,17 @@
                 <div class="card">
                     <div class="card-title">Impostazioni</div>
                     <button class="btn-secondary" onclick="editProfile()">Modifica profilo</button>
-                    <button class="btn-secondary" onclick="editUserName()">Cambia nome utente</button>
+                    <button class="btn-secondary" onclick="editUserName()">Cambia nome</button>
                     <button class="btn-secondary" onclick="switchUser()">Cambia utente</button>
-                    <button class="btn-secondary" style="color: var(--warning);" onclick="resetCurrentUser()">Reset utente corrente</button>
-                    <button class="btn-secondary" style="color: var(--error);" onclick="resetData()">Reset completo</button>
-                    <button class="btn-secondary" style="color: var(--accent);" onclick="generateTestData()">Genera 4 settimane test</button>
                 </div>
 
-                <!-- TODO FUTURE: Admin section
-                <div class="card">
+                <div class="card" id="admin-section">
                     <div class="card-title">Amministrazione</div>
-                    <button class="btn-secondary" onclick="openAdmin()">Gestione utenti</button>
-                    - Creare nuovi utenti
-                    - Reset generale
-                    - Backup/Restore dati
-                    - Statistiche globali
+                    <button class="btn-secondary" onclick="addNewUser()">Aggiungi utente</button>
+                    <button class="btn-secondary" style="color: var(--warning);" onclick="resetCurrentUser()">Reset utente corrente</button>
+                    <button class="btn-secondary" style="color: var(--error);" onclick="resetData()">Reset completo app</button>
+                    <button class="btn-secondary" style="color: var(--accent);" onclick="generateTestData()">Genera dati test</button>
                 </div>
-                -->
             </div>
         </div>
     </div>
@@ -1345,15 +1336,28 @@
         renderUserSelection();
     }
 
+    function initDefaultUsers() {
+        // Create default users if they don't exist
+        if (!state.users['Paolo']) {
+            state.users['Paolo'] = createNewUser();
+            state.users['Paolo'].isAdmin = true;
+        }
+        if (!state.users['Flora']) {
+            state.users['Flora'] = createNewUser();
+        }
+        saveState();
+    }
+
     function renderUserSelection() {
         const container = document.getElementById('user-select-container');
         if (!container) return;
 
-        // Get all users, default to Paolo and Flora if none exist
-        let userNames = Object.keys(state.users);
-        if (userNames.length === 0) {
-            userNames = ['Paolo', 'Flora'];
+        // Ensure default users exist
+        if (Object.keys(state.users).length === 0) {
+            initDefaultUsers();
         }
+
+        const userNames = Object.keys(state.users);
 
         container.innerHTML = userNames.map(name => {
             const user = state.users[name];
@@ -1361,17 +1365,28 @@
             const avatarContent = hasPhoto
                 ? `<img src="${user.photo}">`
                 : name[0].toUpperCase();
+            const isAdmin = user && user.isAdmin;
 
             return `
                 <button class="user-btn" onclick="selectUser('${name}')">
                     <div class="user-avatar">${avatarContent}</div>
-                    <span>${name}</span>
+                    <span>${name}${isAdmin ? ' *' : ''}</span>
                 </button>
             `;
         }).join('');
     }
 
+    function isCurrentUserAdmin() {
+        const user = getUser();
+        return user && user.isAdmin === true;
+    }
+
     function addNewUser() {
+        if (!isCurrentUserAdmin()) {
+            alert('Solo l\'admin può aggiungere utenti');
+            return;
+        }
+
         const newName = prompt('Inserisci il nome del nuovo utente:');
 
         if (!newName || newName.trim() === '') {
@@ -1385,14 +1400,11 @@
             return;
         }
 
-        // Create new user and go to setup
         state.users[trimmedName] = createNewUser();
-        state.currentUser = trimmedName;
         saveState();
         renderUserSelection();
-        showScreen('setup');
-        setupPhotoPreview();
         haptic();
+        alert('Utente ' + trimmedName + ' creato! Può selezionarlo dalla schermata iniziale.');
     }
 
     // Screens
@@ -2413,7 +2425,7 @@
             photoEl.innerHTML = state.currentUser[0];
         }
 
-        document.getElementById('profile-name').textContent = state.currentUser;
+        document.getElementById('profile-name').textContent = state.currentUser + (user.isAdmin ? ' (Admin)' : '');
         document.getElementById('total-days').textContent = user.totalDays;
         document.getElementById('best-streak').textContent = user.bestStreak;
 
@@ -2432,6 +2444,12 @@
             el.innerHTML = `<span>${b.emoji}</span><span>${b.name}</span>`;
             grid.appendChild(el);
         });
+
+        // Show/hide admin section
+        const adminSection = document.getElementById('admin-section');
+        if (adminSection) {
+            adminSection.style.display = isCurrentUserAdmin() ? 'block' : 'none';
+        }
     }
 
     function editProfile() {
@@ -2492,11 +2510,12 @@
     }
 
     function resetData() {
-        if (confirm('Sei sicuro di voler cancellare TUTTI i dati di TUTTI gli utenti?')) {
+        if (confirm('Sei sicuro di voler cancellare TUTTI i dati e ripartire da zero?')) {
             localStorage.removeItem('nunziaDietApp');
             state = { currentUser: null, users: {}, theme: 'light' };
+            initDefaultUsers(); // Recreate Paolo (admin) and Flora
             applyTheme();
-            updateUserAvatars();
+            renderUserSelection();
             showScreen('select');
             haptic();
         }
