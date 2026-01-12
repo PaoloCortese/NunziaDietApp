@@ -902,14 +902,14 @@
 <body>
     <div class="container">
         <div class="header">
-            <div class="header-left">
-                <h1>NunziaDiet</h1>
+            <h1>NunziaDiet</h1>
+            <div style="display:flex;align-items:center;gap:8px;">
+                <div class="header-user" id="header-user" onclick="switchUser()">
+                    <span class="header-name" id="header-name"></span>
+                    <div class="header-avatar" id="header-avatar"></div>
+                </div>
+                <button class="theme-toggle" onclick="toggleTheme()" id="theme-btn">L</button>
             </div>
-            <div class="header-user" id="header-user" onclick="switchUser()">
-                <span class="header-name" id="header-name"></span>
-                <div class="header-avatar" id="header-avatar"></div>
-            </div>
-            <button class="theme-toggle" onclick="toggleTheme()" id="theme-btn">L</button>
         </div>
 
         <!-- Screen: User Selection -->
@@ -1136,14 +1136,14 @@
                     <button class="btn-secondary" onclick="editProfile()">Modifica profilo</button>
                     <button class="btn-secondary" onclick="editUserName()">Cambia nome</button>
                     <button class="btn-secondary" onclick="switchUser()">Cambia utente</button>
+                    <button class="btn-secondary" style="color: var(--accent);" onclick="generateTestData()">Genera dati test</button>
+                    <button class="btn-secondary" style="color: var(--warning);" onclick="resetCurrentUser()">Reset miei dati</button>
                 </div>
 
                 <div class="card" id="admin-section">
                     <div class="card-title">Amministrazione</div>
                     <button class="btn-secondary" onclick="addNewUser()">Aggiungi utente</button>
-                    <button class="btn-secondary" style="color: var(--warning);" onclick="resetCurrentUser()">Reset utente corrente</button>
                     <button class="btn-secondary" style="color: var(--error);" onclick="resetData()">Reset completo app</button>
-                    <button class="btn-secondary" style="color: var(--accent);" onclick="generateTestData()">Genera dati test</button>
                 </div>
             </div>
         </div>
