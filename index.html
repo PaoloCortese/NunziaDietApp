@@ -982,6 +982,10 @@
 
     <script>
     // Food options
+    // Verdure disponibili
+    const INSALATE = ['Lattuga', 'Scarola', 'Pomodori', 'Zucchine', 'Ravanelli', 'Carciofi', 'Cetrioli', 'Finocchi', 'Funghi', 'Sedano', 'Spinaci', 'Friarielli', 'Verza', 'Rucola'];
+    const VERDURE_COTTE = ['Asparagi', 'Melanzane', 'Bietole', 'Broccoli', 'Cavolfiore', 'Porri', 'Peperoni (no gialli)'];
+
     const FOODS = {
         colazione: {
             bevanda: ['Te', 'Caffe', 'Camomilla'],
@@ -995,7 +999,7 @@
             accompagnamento: ['Yogurt greco 0,1%', 'PAT']
         },
         pranzo: {
-            verdura: ['Insalata mista', 'Verdura cotta', 'Insalata + verdura'],
+            verduraTipo: ['Insalata', 'Verdura cotta', 'Insalata + cotta'],
             proteina: [
                 { id: 'carne', name: 'Carne bianca', qtyF: '100g', qtyP: '150g', items: ['Pollo', 'Tacchino', 'Vitello', 'Manzo', 'Coniglio', 'Puledro'] },
                 { id: 'pesce', name: 'Pesce magro', qtyF: '200g', qtyP: '250g', items: ['Orata', 'Branzino', 'Merluzzo', 'Sogliola', 'Rombo', 'Tonno x2'] },
@@ -1011,7 +1015,7 @@
                 { id: 'riso', name: 'Riso integrale', qtyF: '50-60g', qtyP: '80-100g' },
                 { id: 'minestrone', name: 'Minestrone', qtyF: '100-150g', qtyP: '100-150g' }
             ],
-            verdura: ['Insalata mista', 'Verdura cotta', 'Insalata + verdura'],
+            verduraTipo: ['Insalata', 'Verdura cotta', 'Insalata + cotta'],
             proteina: [
                 { id: 'carne', name: 'Carne bianca', qtyF: '100g', qtyP: '150g', items: ['Pollo', 'Tacchino', 'Vitello', 'Manzo', 'Coniglio', 'Puledro'] },
                 { id: 'pesce', name: 'Pesce magro', qtyF: '200g', qtyP: '250g', items: ['Orata', 'Branzino', 'Merluzzo', 'Sogliola', 'Rombo', 'Tonno x1'] },
@@ -1391,6 +1395,29 @@
         saveState();
     }
 
+    function toggleVerdura(mealKey, tipo, verdura) {
+        const meal = getMealData(mealKey);
+        if (!meal.sel.verdureItems) meal.sel.verdureItems = { insalate: [], cotte: [] };
+
+        const arr = tipo === 'insalata' ? meal.sel.verdureItems.insalate : meal.sel.verdureItems.cotte;
+        const idx = arr.indexOf(verdura);
+        if (idx >= 0) {
+            arr.splice(idx, 1);
+        } else {
+            arr.push(verdura);
+        }
+        saveState();
+        renderMeals();
+        haptic();
+    }
+
+    function isVerduraSelected(mealKey, tipo, verdura) {
+        const meal = getMealData(mealKey);
+        if (!meal.sel.verdureItems) return false;
+        const arr = tipo === 'insalata' ? meal.sel.verdureItems.insalate : meal.sel.verdureItems.cotte;
+        return arr.includes(verdura);
+    }
+
     function getPref(mealKey, key) {
         const user = getUser();
         return user.prefs[mealKey] ? user.prefs[mealKey][key] : null;
@@ -1400,6 +1427,32 @@
         return `<div class="choice-buttons">${options.map(o =>
             `<button class="choice-btn${selected === o ? ' selected' : ''}" onclick="setMealSel('${mealKey}','${key}','${o}')">${o}</button>`
         ).join('')}</div>`;
+    }
+
+    function verdureSection(mealKey, verduraTipo) {
+        let html = '';
+        const showInsalate = verduraTipo === 'Insalata' || verduraTipo === 'Insalata + cotta';
+        const showCotte = verduraTipo === 'Verdura cotta' || verduraTipo === 'Insalata + cotta';
+
+        if (showInsalate) {
+            html += `<div class="detail-section">
+                <div class="choice-label">Insalata a volonta</div>
+                <div class="choice-buttons">${INSALATE.map(v =>
+                    `<button class="choice-btn small${isVerduraSelected(mealKey, 'insalata', v) ? ' selected' : ''}" onclick="toggleVerdura('${mealKey}','insalata','${v}')">${v}</button>`
+                ).join('')}</div>
+            </div>`;
+        }
+
+        if (showCotte) {
+            html += `<div class="detail-section">
+                <div class="choice-label">Verdura cotta a volonta</div>
+                <div class="choice-buttons">${VERDURE_COTTE.map(v =>
+                    `<button class="choice-btn small${isVerduraSelected(mealKey, 'cotta', v) ? ' selected' : ''}" onclick="toggleVerdura('${mealKey}','cotta','${v}')">${v}</button>`
+                ).join('')}</div>
+            </div>`;
+        }
+
+        return html;
     }
 
     function statusBtns(mealKey, status) {
@@ -1457,11 +1510,13 @@
                     </div>`;
                 }
             }
+            const verduraTipo = m.sel.verduraTipo || getPref('pranzo', 'verduraTipo');
             content += `
                 <div class="choice-group">
-                    <div class="choice-label">Verdura</div>
-                    ${btnGroup('pranzo', 'verdura', FOODS.pranzo.verdura, m.sel.verdura || getPref('pranzo', 'verdura'))}
+                    <div class="choice-label">Tipo verdura</div>
+                    ${btnGroup('pranzo', 'verduraTipo', FOODS.pranzo.verduraTipo, verduraTipo)}
                 </div>
+                ${verduraTipo ? verdureSection('pranzo', verduraTipo) : ''}
                 <div class="choice-group">
                     <div class="choice-label">Proteina</div>
                     <div class="choice-buttons">${FOODS.pranzo.proteina.map(pr =>
@@ -1484,6 +1539,7 @@
                     </div>`;
                 }
             }
+            const verduraTipoCena = m.sel.verduraTipo || getPref('cena', 'verduraTipo');
             content += `
                 <div class="choice-group">
                     <div class="choice-label">Carboidrato</div>
@@ -1492,9 +1548,10 @@
                     ).join('')}</div>
                 </div>
                 <div class="choice-group">
-                    <div class="choice-label">Verdura</div>
-                    ${btnGroup('cena', 'verdura', FOODS.cena.verdura, m.sel.verdura || getPref('cena', 'verdura'))}
+                    <div class="choice-label">Tipo verdura</div>
+                    ${btnGroup('cena', 'verduraTipo', FOODS.cena.verduraTipo, verduraTipoCena)}
                 </div>
+                ${verduraTipoCena ? verdureSection('cena', verduraTipoCena) : ''}
                 <div class="choice-group">
                     <div class="choice-label">Proteina</div>
                     <div class="choice-buttons">${FOODS.cena.proteina.map(pr =>
