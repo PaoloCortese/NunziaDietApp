@@ -2243,13 +2243,40 @@
         user.streak = currentStreak;
         user.currentWeight = weight;
 
+        // Generate 2 dietologist visits
+        user.visits = [];
+        const visit1Date = new Date(startDate);
+        visit1Date.setDate(visit1Date.getDate() + 7); // 1 week in
+        const visit1Weight = user.startWeight - 1.2;
+        user.visits.push({
+            date: formatDate(visit1Date),
+            weight: Math.round(visit1Weight * 10) / 10,
+            outcome: 'positive',
+            notes: 'Buon inizio, continuare cosi. Aumentare acqua.'
+        });
+        user.weightHistory.push({ date: formatDate(visit1Date), weight: Math.round(visit1Weight * 10) / 10, isVisit: true });
+
+        const visit2Date = new Date(startDate);
+        visit2Date.setDate(visit2Date.getDate() + 21); // 3 weeks in
+        const visit2Weight = user.startWeight - 2.8;
+        user.visits.push({
+            date: formatDate(visit2Date),
+            weight: Math.round(visit2Weight * 10) / 10,
+            outcome: 'positive',
+            notes: 'Ottimi progressi! Mantenere regime attuale.'
+        });
+        user.weightHistory.push({ date: formatDate(visit2Date), weight: Math.round(visit2Weight * 10) / 10, isVisit: true });
+
+        // Sort weight history by date
+        user.weightHistory.sort((a, b) => a.date.localeCompare(b.date));
+
         saveState();
         viewingDate = new Date();
         updateDayNav();
         initDashboard();
         renderProfile();
         haptic();
-        alert('Generati 28 giorni di dati di test!');
+        alert('Generati 28 giorni + 2 visite dietologo!');
     }
 
     // Init
