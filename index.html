@@ -691,6 +691,100 @@
         .history-meal-status.sgarro { background: var(--error); }
         .history-meal-status.skip { background: var(--text-secondary); }
 
+        /* History Week */
+        .history-week {
+            background: var(--card);
+            border-radius: 12px;
+            margin-bottom: 8px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+        .history-week-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px;
+            cursor: pointer;
+        }
+        .history-week-header:active {
+            background: var(--bg);
+        }
+        .history-week-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .history-week-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--accent);
+        }
+        .history-week-period {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        .history-week-stats {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .history-week-arrow {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: var(--text-secondary);
+        }
+        .history-week-content {
+            border-top: 1px solid var(--border);
+            padding: 8px;
+        }
+        .history-day-mini {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 4px;
+        }
+        .history-day-mini:active {
+            background: var(--bg);
+        }
+        .history-day-mini-date {
+            width: 60px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text);
+        }
+        .history-day-mini-info {
+            flex: 1;
+            font-size: 12px;
+            color: var(--text-secondary);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .history-visit {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 8px;
+            border: 2px solid var(--accent);
+        }
+        .history-visit-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+        .history-visit-date {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
         /* Success Animation */
         .success-overlay {
             position: fixed;
@@ -2251,113 +2345,170 @@
     }
 
     // History
+    function getWeekNumber(date, startDate) {
+        const start = new Date(startDate);
+        const diff = Math.floor((date - start) / (1000 * 60 * 60 * 24));
+        return Math.floor(diff / 7) + 1;
+    }
+
     function renderHistory() {
         const user = getUser();
         const container = document.getElementById('history-container');
         container.innerHTML = '';
 
-        // Combine days and visits into a single timeline
-        const events = [];
-
-        // Add days
-        Object.keys(user.days).filter(d => user.days[d].done).forEach(dateStr => {
-            events.push({ type: 'day', date: dateStr, data: user.days[dateStr] });
-        });
-
-        // Add visits
-        (user.visits || []).forEach(visit => {
-            if (visit.date) {
-                events.push({ type: 'visit', date: visit.date, data: visit });
-            }
-        });
-
-        // Sort by date descending and take last 20
-        events.sort((a, b) => b.date.localeCompare(a.date));
-        const recentEvents = events.slice(0, 20);
-
-        if (recentEvents.length === 0) {
+        if (!user.startDate) {
             container.innerHTML = '<p style="text-align:center;color:var(--text-secondary);padding:20px;">Nessun dato salvato</p>';
             return;
         }
 
-        recentEvents.forEach(event => {
-            const date = new Date(event.date);
-            const dateLabel = date.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'short' });
+        // Collect all days
+        const days = Object.keys(user.days)
+            .filter(d => user.days[d].done)
+            .map(dateStr => ({ type: 'day', date: dateStr, data: user.days[dateStr] }));
 
-            if (event.type === 'day') {
+        // Collect visits
+        const visits = (user.visits || [])
+            .filter(v => v.date)
+            .map(v => ({ type: 'visit', date: v.date, data: v }));
+
+        if (days.length === 0 && visits.length === 0) {
+            container.innerHTML = '<p style="text-align:center;color:var(--text-secondary);padding:20px;">Nessun dato salvato</p>';
+            return;
+        }
+
+        // Group days by week
+        const weeks = {};
+        days.forEach(day => {
+            const weekNum = getWeekNumber(new Date(day.date), user.startDate);
+            if (!weeks[weekNum]) {
+                weeks[weekNum] = { days: [], visits: [] };
+            }
+            weeks[weekNum].days.push(day);
+        });
+
+        // Assign visits to weeks
+        visits.forEach(visit => {
+            const weekNum = getWeekNumber(new Date(visit.date), user.startDate);
+            if (!weeks[weekNum]) {
+                weeks[weekNum] = { days: [], visits: [] };
+            }
+            weeks[weekNum].visits.push(visit);
+        });
+
+        // Sort weeks descending
+        const sortedWeeks = Object.keys(weeks).map(Number).sort((a, b) => b - a);
+
+        sortedWeeks.forEach(weekNum => {
+            const week = weeks[weekNum];
+
+            // Sort days in week
+            week.days.sort((a, b) => b.date.localeCompare(a.date));
+
+            // Calculate week stats
+            const okDays = week.days.filter(d => !Object.values(d.data.meals).some(m => m.status === 'sgarro')).length;
+            const sgarroDays = week.days.length - okDays;
+
+            // Week start/end dates
+            const weekDates = week.days.map(d => new Date(d.date)).sort((a, b) => a - b);
+            const startDateLabel = weekDates.length > 0 ? weekDates[0].toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }) : '';
+            const endDateLabel = weekDates.length > 0 ? weekDates[weekDates.length - 1].toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }) : '';
+            const periodLabel = startDateLabel === endDateLabel ? startDateLabel : `${startDateLabel} - ${endDateLabel}`;
+
+            // Create week container
+            const weekEl = document.createElement('div');
+            weekEl.className = 'history-week';
+            weekEl.innerHTML = `
+                <div class="history-week-header" onclick="toggleWeek(this)">
+                    <div class="history-week-title">
+                        <span class="history-week-name">W${weekNum}</span>
+                        <span class="history-week-period">${periodLabel}</span>
+                    </div>
+                    <div class="history-week-stats">
+                        <span style="color:var(--success);">${okDays} OK</span>
+                        <span style="color:var(--error);">${sgarroDays} X</span>
+                        <span class="history-week-arrow">+</span>
+                    </div>
+                </div>
+                <div class="history-week-content" style="display:none;"></div>
+            `;
+
+            const contentEl = weekEl.querySelector('.history-week-content');
+
+            // Add days
+            week.days.forEach(event => {
+                const date = new Date(event.date);
+                const dateLabel = date.toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric' });
                 const dayData = event.data;
+
                 const sgarroMeals = [];
                 let dayNotes = [];
 
-                // Collect sgarro meals and notes
                 ['colazione', 'mezzaMattina', 'pranzo', 'pomeriggio', 'cena'].forEach(mealKey => {
                     const meal = dayData.meals[mealKey];
                     if (meal) {
-                        if (meal.status === 'sgarro') {
-                            sgarroMeals.push(MEAL_NAMES[mealKey]);
-                        }
-                        if (meal.note && meal.note.trim()) {
-                            dayNotes.push(`${MEAL_NAMES[mealKey]}: ${meal.note}`);
-                        }
+                        if (meal.status === 'sgarro') sgarroMeals.push(MEAL_NAMES[mealKey]);
+                        if (meal.note && meal.note.trim()) dayNotes.push(meal.note);
                     }
                 });
 
                 const hasSgarro = sgarroMeals.length > 0;
 
-                let contentHtml = `<div style="font-size:12px;color:var(--text-secondary);">Acqua: ${dayData.water * 0.5}L | Attivita: ${dayData.activity ? 'Si' : 'No'}</div>`;
-
-                if (hasSgarro) {
-                    contentHtml += `<div style="margin-top:6px;font-size:13px;color:var(--error);">X ${sgarroMeals.join(', ')}</div>`;
-                }
-
-                if (dayNotes.length > 0) {
-                    contentHtml += `<div style="margin-top:6px;padding:8px;background:var(--bg);border-radius:6px;font-size:12px;color:var(--text);">${dayNotes.join('<br>')}</div>`;
-                }
-
-                const el = document.createElement('div');
-                el.className = 'history-day';
-                el.style.cursor = 'pointer';
-                el.innerHTML = `
-                    <div class="history-day-header">
-                        <span class="history-day-date">${dateLabel}</span>
-                        <span class="history-day-status ${hasSgarro ? 'sgarro' : 'ok'}">${hasSgarro ? 'Sgarro' : 'OK'}</span>
-                    </div>
-                    ${contentHtml}
-                    <div style="text-align:center;margin-top:8px;font-size:11px;color:var(--text-secondary);">Tocca per dettagli</div>
+                const dayEl = document.createElement('div');
+                dayEl.className = 'history-day-mini';
+                dayEl.style.cursor = 'pointer';
+                dayEl.innerHTML = `
+                    <span class="history-day-mini-date">${dateLabel}</span>
+                    <span class="history-day-mini-info">${hasSgarro ? 'X ' + sgarroMeals.join(', ') : (dayNotes.length > 0 ? dayNotes[0].substring(0, 20) + '...' : '')}</span>
+                    <span class="history-day-status ${hasSgarro ? 'sgarro' : 'ok'}">${hasSgarro ? 'X' : 'OK'}</span>
                 `;
-                el.onclick = () => showDayDetail(event.date);
-                container.appendChild(el);
+                dayEl.onclick = (e) => { e.stopPropagation(); showDayDetail(event.date); };
+                contentEl.appendChild(dayEl);
+            });
 
-            } else if (event.type === 'visit') {
-                const visit = event.data;
+            container.appendChild(weekEl);
+
+            // Add visits after week (if any)
+            week.visits.forEach(visit => {
+                const date = new Date(visit.date);
+                const dateLabel = date.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'short' });
                 const outcomeLabels = { positive: 'Positivo', neutral: 'Neutro', negative: 'Negativo' };
                 const outcomeColors = { positive: 'var(--success)', neutral: 'var(--warning)', negative: 'var(--error)' };
 
                 let visitHtml = '';
-                if (visit.weight) {
-                    visitHtml += `<div style="font-size:14px;font-weight:600;color:var(--accent);">Peso: ${visit.weight} kg</div>`;
+                if (visit.data.weight) {
+                    visitHtml += `<div style="font-size:14px;font-weight:600;color:var(--accent);">Peso: ${visit.data.weight} kg</div>`;
                 }
-                if (visit.outcome) {
-                    visitHtml += `<div style="font-size:12px;margin-top:4px;color:${outcomeColors[visit.outcome] || 'var(--text)'};">Esito: ${outcomeLabels[visit.outcome] || visit.outcome}</div>`;
+                if (visit.data.outcome) {
+                    visitHtml += `<div style="font-size:12px;margin-top:4px;color:${outcomeColors[visit.data.outcome] || 'var(--text)'};">Esito: ${outcomeLabels[visit.data.outcome] || visit.data.outcome}</div>`;
                 }
-                if (visit.notes) {
-                    visitHtml += `<div style="margin-top:6px;padding:8px;background:var(--bg);border-radius:6px;font-size:12px;color:var(--text);">${visit.notes}</div>`;
+                if (visit.data.notes) {
+                    visitHtml += `<div style="margin-top:6px;padding:8px;background:var(--bg);border-radius:6px;font-size:12px;color:var(--text);">${visit.data.notes}</div>`;
                 }
 
-                const el = document.createElement('div');
-                el.className = 'history-day';
-                el.style.borderColor = 'var(--accent)';
-                el.style.borderWidth = '2px';
-                el.innerHTML = `
-                    <div class="history-day-header">
-                        <span class="history-day-date">${dateLabel}</span>
+                const visitEl = document.createElement('div');
+                visitEl.className = 'history-visit';
+                visitEl.innerHTML = `
+                    <div class="history-visit-header">
                         <span style="font-size:11px;padding:4px 8px;background:var(--accent);color:#fff;border-radius:12px;">VISITA</span>
+                        <span class="history-visit-date">${dateLabel}</span>
                     </div>
                     ${visitHtml}
                 `;
-                container.appendChild(el);
-            }
+                container.appendChild(visitEl);
+            });
         });
+    }
+
+    function toggleWeek(header) {
+        const content = header.nextElementSibling;
+        const arrow = header.querySelector('.history-week-arrow');
+        if (content.style.display === 'none') {
+            content.style.display = 'block';
+            arrow.textContent = '-';
+        } else {
+            content.style.display = 'none';
+            arrow.textContent = '+';
+        }
     }
 
     // Day Detail Modal
