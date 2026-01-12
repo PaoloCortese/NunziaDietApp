@@ -479,11 +479,27 @@
             border-radius: 8px;
             cursor: pointer;
             transition: all 0.2s;
+            position: relative;
         }
         .week-day:active { transform: scale(0.95); }
         .week-day-name { font-size: 10px; color: var(--text-secondary); margin-bottom: 4px; }
         .week-day-num { font-size: 12px; color: var(--text); font-weight: 500; margin-bottom: 2px; }
         .week-day-status { font-size: 14px; }
+        .week-day-activity {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--success);
+            color: #fff;
+            font-size: 8px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
         .week-day.today {
             background: var(--accent-light);
             border: 1px solid var(--accent);
@@ -2137,15 +2153,22 @@
             const dayData = user.days[dateStr];
 
             let status = '-';
+            let hasActivity = false;
             if (dayData && dayData.done) {
                 const hasSgarro = Object.values(dayData.meals).some(m => m.status === 'sgarro');
                 status = hasSgarro ? 'x' : 'v';
+                hasActivity = dayData.activity;
                 hasSgarro ? sgarroCount++ : okCount++;
             }
 
             const el = document.createElement('div');
             el.className = 'week-day' + (i === 0 ? ' today' : '');
-            el.innerHTML = `<div class="week-day-name">${dayNames[d.getDay()]}</div><div class="week-day-num">${d.getDate()}</div><div class="week-day-status">${status}</div>`;
+            el.innerHTML = `
+                <div class="week-day-name">${dayNames[d.getDay()]}</div>
+                <div class="week-day-num">${d.getDate()}</div>
+                <div class="week-day-status">${status}</div>
+                ${hasActivity ? '<div class="week-day-activity">A</div>' : ''}
+            `;
             el.onclick = () => {
                 viewingDate = new Date(d);
                 updateDayNav();
