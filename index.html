@@ -965,7 +965,8 @@
                     <div class="card-title">Impostazioni</div>
                     <button class="btn-secondary" onclick="editProfile()">Modifica profilo</button>
                     <button class="btn-secondary" onclick="switchUser()">Cambia utente</button>
-                    <button class="btn-secondary" style="color: var(--error);" onclick="resetData()">Reset dati</button>
+                    <button class="btn-secondary" style="color: var(--warning);" onclick="resetCurrentUser()">Reset utente corrente</button>
+                    <button class="btn-secondary" style="color: var(--error);" onclick="resetData()">Reset completo</button>
                 </div>
             </div>
         </div>
@@ -1993,12 +1994,25 @@
         showScreen('select');
     }
 
+    function resetCurrentUser() {
+        if (confirm('Sei sicuro di voler cancellare i dati di ' + state.currentUser + '?')) {
+            delete state.users[state.currentUser];
+            state.currentUser = null;
+            saveState();
+            updateUserAvatars();
+            showScreen('select');
+            haptic();
+        }
+    }
+
     function resetData() {
-        if (confirm('Sei sicuro di voler cancellare tutti i dati?')) {
+        if (confirm('Sei sicuro di voler cancellare TUTTI i dati di TUTTI gli utenti?')) {
             localStorage.removeItem('nunziaDietApp');
             state = { currentUser: null, users: {}, theme: 'light' };
             applyTheme();
+            updateUserAvatars();
             showScreen('select');
+            haptic();
         }
     }
 
