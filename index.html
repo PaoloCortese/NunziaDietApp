@@ -1148,8 +1148,9 @@
 
                 <div class="btn-row">
                     <button class="btn-secondary" onclick="copyPreviousDay()">Copia ieri</button>
-                    <button class="btn-primary" onclick="saveDay()">Salva</button>
+                    <button class="btn-primary" id="confirm-day-btn" onclick="confirmDay()">Conferma giornata</button>
                 </div>
+                <p style="text-align:center;font-size:11px;color:var(--text-secondary);margin-top:8px;">I dati vengono salvati automaticamente</p>
             </div>
 
             <!-- Tab: Weekly -->
@@ -1722,6 +1723,7 @@
         renderActivity();
         renderMeals();
         updateWeightDisplay();
+        updateConfirmButton();
     }
 
     function updateStats() {
@@ -2066,13 +2068,29 @@
     }
 
     // Save day
-    function saveDay() {
+    function confirmDay() {
         const data = getDayData();
         const meals = ['colazione', 'mezzaMattina', 'pranzo', 'pomeriggio', 'cena'];
         const allSet = meals.every(k => data.meals[k] && data.meals[k].status);
 
         if (!allSet) {
-            alert('Completa tutti i pasti prima di salvare!');
+            alert('Completa tutti i pasti prima di confermare!');
+            return;
+        }
+
+        // If already confirmed, allow modification
+        if (data.done) {
+            if (confirm('Vuoi modificare i dati di questa giornata?')) {
+                // Recalculate points/streak on modification
+                const user = getUser();
+                const hasSgarro = meals.some(k => data.meals[k].status === 'sgarro');
+
+                saveState();
+                updateStats();
+                updateConfirmButton();
+                haptic();
+                showSuccess('Giornata modificata', 'Dati aggiornati!');
+            }
             return;
         }
 
@@ -2096,6 +2114,7 @@
 
         saveState();
         updateStats();
+        updateConfirmButton();
         haptic();
 
         // Show success animation
@@ -2104,6 +2123,22 @@
             createConfetti();
         } else {
             showSuccess('Giornata salvata', 'Domani si riparte!');
+        }
+    }
+
+    function updateConfirmButton() {
+        const data = getDayData();
+        const btn = document.getElementById('confirm-day-btn');
+        if (btn) {
+            if (data.done) {
+                btn.textContent = 'Modifica giornata';
+                btn.classList.remove('btn-primary');
+                btn.classList.add('btn-secondary');
+            } else {
+                btn.textContent = 'Conferma giornata';
+                btn.classList.remove('btn-secondary');
+                btn.classList.add('btn-primary');
+            }
         }
     }
 
