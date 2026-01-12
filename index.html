@@ -967,6 +967,7 @@
                     <button class="btn-secondary" onclick="switchUser()">Cambia utente</button>
                     <button class="btn-secondary" style="color: var(--warning);" onclick="resetCurrentUser()">Reset utente corrente</button>
                     <button class="btn-secondary" style="color: var(--error);" onclick="resetData()">Reset completo</button>
+                    <button class="btn-secondary" style="color: var(--accent);" onclick="generateTestData()">Genera 4 settimane test</button>
                 </div>
             </div>
         </div>
@@ -2014,6 +2015,134 @@
             showScreen('select');
             haptic();
         }
+    }
+
+    // Test data generator
+    function generateTestData() {
+        if (!confirm('Genera 4 settimane di dati di test per ' + state.currentUser + '?')) return;
+
+        const user = getUser();
+        const today = new Date();
+        const startDate = new Date(today);
+        startDate.setDate(startDate.getDate() - 28); // 4 weeks ago
+
+        // Set user profile if not set
+        if (!user.startDate) {
+            user.startDate = formatDate(startDate);
+            user.startWeight = isPaolo() ? 85 : 68;
+            user.goalWeight = isPaolo() ? 78 : 62;
+            user.targetWeeks = 8;
+            user.currentWeight = user.startWeight;
+        }
+
+        // Reset stats
+        user.points = 0;
+        user.streak = 0;
+        user.bestStreak = 0;
+        user.totalDays = 0;
+        user.weightHistory = [{ date: user.startDate, weight: user.startWeight }];
+        user.days = {};
+
+        const proteine = ['carne', 'pesce', 'crostacei', 'affettato', 'formaggio', 'uova'];
+        const carbo = ['pasta', 'riso', 'minestrone'];
+        const bevande = ['Te', 'Caffe', 'Camomilla'];
+        const accomp = ['Yogurt greco 0,1%', 'PAT'];
+        const snack = ['Uovo sodo', 'Bresaola 30g', 'Fesa tacchino 30g', 'Yogurt greco'];
+        const verduraTipi = ['Insalata', 'Verdura cotta', 'Insalata + cotta'];
+
+        let currentStreak = 0;
+        let weight = user.startWeight;
+
+        for (let i = 0; i < 28; i++) {
+            const d = new Date(startDate);
+            d.setDate(d.getDate() + i);
+            const dateStr = formatDate(d);
+
+            // 85% chance of OK day, 15% sgarro
+            const hasSgarro = Math.random() < 0.15;
+
+            const dayData = {
+                water: Math.floor(Math.random() * 3) + 2, // 2-4
+                activity: Math.random() > 0.4, // 60% chance
+                done: true,
+                meals: {
+                    colazione: {
+                        sel: { bevanda: bevande[Math.floor(Math.random() * bevande.length)], accompagnamento: accomp[Math.floor(Math.random() * accomp.length)] },
+                        status: hasSgarro && Math.random() < 0.2 ? 'sgarro' : 'ok',
+                        note: ''
+                    },
+                    mezzaMattina: {
+                        sel: { proteina: snack[Math.floor(Math.random() * snack.length)] },
+                        status: Math.random() < 0.1 ? 'skip' : 'ok',
+                        note: ''
+                    },
+                    pranzo: {
+                        sel: {
+                            verduraTipo: verduraTipi[Math.floor(Math.random() * verduraTipi.length)],
+                            proteina: proteine[Math.floor(Math.random() * proteine.length)],
+                            verdureItems: { insalate: ['Lattuga', 'Pomodori'], cotte: ['Broccoli'] }
+                        },
+                        status: hasSgarro && Math.random() < 0.5 ? 'sgarro' : 'ok',
+                        note: ''
+                    },
+                    pomeriggio: {
+                        sel: { bevanda: bevande[Math.floor(Math.random() * bevande.length)], accompagnamento: accomp[Math.floor(Math.random() * accomp.length)] },
+                        status: Math.random() < 0.15 ? 'skip' : 'ok',
+                        note: ''
+                    },
+                    cena: {
+                        sel: {
+                            carbo: carbo[Math.floor(Math.random() * carbo.length)],
+                            verduraTipo: verduraTipi[Math.floor(Math.random() * verduraTipi.length)],
+                            proteina: proteine[Math.floor(Math.random() * proteine.length)],
+                            verdureItems: { insalate: ['Rucola'], cotte: ['Melanzane'] }
+                        },
+                        status: hasSgarro ? 'sgarro' : 'ok',
+                        note: hasSgarro ? 'Pizza con amici' : ''
+                    }
+                }
+            };
+
+            user.days[dateStr] = dayData;
+            user.totalDays++;
+
+            // Update streak and points
+            const dayHasSgarro = Object.values(dayData.meals).some(m => m.status === 'sgarro');
+            if (dayHasSgarro) {
+                currentStreak = 0;
+            } else {
+                currentStreak++;
+                let bonus = 10;
+                if (dayData.water >= 4) bonus += 5;
+                if (dayData.activity) bonus += 5;
+                user.points += bonus;
+            }
+            if (currentStreak > user.bestStreak) user.bestStreak = currentStreak;
+
+            // Update weight (gradual decrease with some variation)
+            if (i % 3 === 0 && !dayHasSgarro) {
+                weight -= (Math.random() * 0.3 + 0.1); // Lose 0.1-0.4 kg
+            } else if (dayHasSgarro) {
+                weight += (Math.random() * 0.2); // Gain 0-0.2 kg
+            }
+            weight = Math.round(weight * 10) / 10;
+
+            // Add weight entry every few days
+            if (i % 4 === 0 || i === 27) {
+                user.weightHistory.push({ date: dateStr, weight: weight });
+            }
+        }
+
+        user.streak = currentStreak;
+        user.currentWeight = weight;
+
+        saveState();
+        viewingDate = new Date();
+        updateDayNav();
+        initDashboard();
+        renderProfile();
+        haptic();
+        alert('Generati 28 giorni di dati di test!');
     }
 
     // Init
