@@ -54,21 +54,54 @@
 
         .header {
             text-align: center;
-            padding: 24px 0 16px;
+            padding: 16px 0;
             display: flex;
-            justify-content: center;
+            justify-content: space-between;
             align-items: center;
-            gap: 12px;
         }
         .header h1 {
-            font-size: 24px;
+            font-size: 20px;
             font-weight: 600;
             color: var(--accent);
             letter-spacing: -0.5px;
         }
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .header-user {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+        .header-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--accent-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--accent);
+            overflow: hidden;
+        }
+        .header-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .header-name {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text);
+        }
         .theme-toggle {
-            width: 36px;
-            height: 36px;
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
             border: 1px solid var(--border);
             background: var(--card);
@@ -76,7 +109,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 16px;
+            font-size: 14px;
             transition: all 0.2s;
         }
         .theme-toggle:active { transform: scale(0.95); }
@@ -869,7 +902,13 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>NunziaDiet</h1>
+            <div class="header-left">
+                <h1>NunziaDiet</h1>
+            </div>
+            <div class="header-user" id="header-user" onclick="switchUser()">
+                <span class="header-name" id="header-name"></span>
+                <div class="header-avatar" id="header-avatar"></div>
+            </div>
             <button class="theme-toggle" onclick="toggleTheme()" id="theme-btn">L</button>
         </div>
 
@@ -1334,6 +1373,29 @@
 
     function updateUserAvatars() {
         renderUserSelection();
+        updateHeaderUser();
+    }
+
+    function updateHeaderUser() {
+        const headerUser = document.getElementById('header-user');
+        const headerName = document.getElementById('header-name');
+        const headerAvatar = document.getElementById('header-avatar');
+
+        if (!state.currentUser) {
+            headerUser.style.display = 'none';
+            return;
+        }
+
+        headerUser.style.display = 'flex';
+        const user = getUser();
+
+        headerName.textContent = state.currentUser;
+
+        if (user && user.photo) {
+            headerAvatar.innerHTML = `<img src="${user.photo}">`;
+        } else {
+            headerAvatar.innerHTML = state.currentUser[0].toUpperCase();
+        }
     }
 
     function initDefaultUsers() {
@@ -1462,6 +1524,7 @@
     // User selection
     function selectUser(name) {
         state.currentUser = name;
+        updateHeaderUser();
         if (!state.users[name]) {
             state.users[name] = createNewUser();
             saveState();
@@ -2678,7 +2741,8 @@
 
     // Init
     loadState();
-    renderUserSelection(); // Always render user buttons on load
+    renderUserSelection();
+    updateHeaderUser();
     if (state.currentUser && state.users[state.currentUser] && state.users[state.currentUser].startDate) {
         showScreen('dashboard');
         viewingDate = new Date();
