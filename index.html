@@ -754,10 +754,27 @@
             background: var(--bg);
         }
         .history-day-mini-date {
-            width: 60px;
+            width: 55px;
             font-size: 13px;
             font-weight: 500;
             color: var(--text);
+        }
+        .history-day-mini-activity {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--success);
+            color: #fff;
+            font-size: 10px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 8px;
+            opacity: 0;
+        }
+        .history-day-mini-activity:not(:empty) {
+            opacity: 1;
         }
         .history-day-mini-info {
             flex: 1;
@@ -2452,13 +2469,23 @@
                 });
 
                 const hasSgarro = sgarroMeals.length > 0;
+                const hasActivity = dayData.activity;
+
+                // Build info text
+                let infoText = '';
+                if (hasSgarro) {
+                    infoText = 'X ' + sgarroMeals.join(', ');
+                } else if (dayNotes.length > 0) {
+                    infoText = dayNotes[0].substring(0, 20) + '...';
+                }
 
                 const dayEl = document.createElement('div');
                 dayEl.className = 'history-day-mini';
                 dayEl.style.cursor = 'pointer';
                 dayEl.innerHTML = `
                     <span class="history-day-mini-date">${dateLabel}</span>
-                    <span class="history-day-mini-info">${hasSgarro ? 'X ' + sgarroMeals.join(', ') : (dayNotes.length > 0 ? dayNotes[0].substring(0, 20) + '...' : '')}</span>
+                    <span class="history-day-mini-activity">${hasActivity ? 'A' : ''}</span>
+                    <span class="history-day-mini-info">${infoText}</span>
                     <span class="history-day-status ${hasSgarro ? 'sgarro' : 'ok'}">${hasSgarro ? 'X' : 'OK'}</span>
                 `;
                 dayEl.onclick = (e) => { e.stopPropagation(); showDayDetail(event.date); };
